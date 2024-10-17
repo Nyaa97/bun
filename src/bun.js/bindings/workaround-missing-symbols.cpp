@@ -58,6 +58,13 @@ extern "C" int kill(int pid, int sig)
 #define _GNU_SOURCE
 #endif
 
+#ifndef __GLIBC__
+#ifndef _LARGEFILE64_SOURCE
+#define _LARGEFILE64_SOURCE
+#endif
+#include <sys/stat.h>
+#endif
+
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <stdarg.h>
@@ -74,6 +81,7 @@ extern "C" int kill(int pid, int sig)
 #endif
 #endif
 
+#if defined(__GLIBC__)
 #if defined(__x86_64__)
 __asm__(".symver cosf,cosf@GLIBC_2.2.5");
 __asm__(".symver exp,exp@GLIBC_2.2.5");
@@ -106,6 +114,10 @@ __asm__(".symver pow,pow@GLIBC_2.17");
 __asm__(".symver sincosf,sincosf@GLIBC_2.17");
 __asm__(".symver sinf,sinf@GLIBC_2.17");
 __asm__(".symver tanf,tanf@GLIBC_2.17");
+#endif
+#else
+typedef mode_t __mode_t;
+typedef dev_t __dev_t;
 #endif
 
 #if defined(__x86_64__) || defined(__aarch64__)
@@ -288,6 +300,7 @@ extern "C" int __wrap_fstatat(int dirfd, const char* path, struct stat* stat, in
     return __fxstatat(_STAT_VER, dirfd, path, stat, flags);
 }
 
+#if defined(__GLIBC__)
 extern "C" int __lxstat64(int ver, const char* filename, struct stat64* stat);
 extern "C" int __wrap_lstat64(const char* filename, struct stat64* stat)
 {
@@ -311,6 +324,43 @@ extern "C" int __wrap_fstatat64(int dirfd, const char* path, struct stat64* stat
 {
     return __fxstatat64(_STAT_VER, dirfd, path, stat, flags);
 }
+#else
+extern "C" int __lxstat64(int ver, const char* filename, struct stat64* stat)
+{
+    return __lxstat(_STAT_VER, filename, stat);
+}
+extern "C" int __wrap_lstat64(const char* filename, struct stat64* stat)
+{
+    return __lxstat(_STAT_VER, filename, stat);
+}
+
+extern "C" int __xstat64(int ver, const char* filename, struct stat64* stat)
+{
+    return __xstat(_STAT_VER, filename, stat);
+}
+extern "C" int __wrap_stat64(const char* filename, struct stat64* stat)
+{
+    return __xstat(_STAT_VER, filename, stat);
+}
+
+extern "C" int __fxstat64(int ver, int fd, struct stat64* stat)
+{
+    return __fxstat(_STAT_VER, fd, stat);
+}
+extern "C" int __wrap_fstat64(int fd, struct stat64* stat)
+{
+    return __fxstat(_STAT_VER, fd, stat);
+}
+
+extern "C" int __fxstatat64(int ver, int dirfd, const char* path, struct stat64* stat, int flags)
+{
+    return __fxstatat(_STAT_VER, dirfd, path, stat, flags);
+}
+extern "C" int __wrap_fstatat64(int dirfd, const char* path, struct stat64* stat, int flags)
+{
+    return __fxstatat(_STAT_VER, dirfd, path, stat, flags);
+}
+#endif
 
 extern "C" int __xmknod(int ver, const char* path, __mode_t mode, __dev_t dev);
 extern "C" int __wrap_mknod(const char* path, __mode_t mode, __dev_t dev)

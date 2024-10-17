@@ -3,16 +3,22 @@
 #include <cstdio>
 
 #if !OS(WINDOWS)
-#include <sys/resource.h>
+#if defined(__GLIBC__)
 #include <sys/fcntl.h>
-#include <sys/stat.h>
 #include <sys/signal.h>
+#include <sys/termios.h>
+#else
+#include <fcntl.h>
+#include <signal.h>
+#include <termios.h>
+#endif
+#include <sys/resource.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <cstring>
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
-#include <sys/termios.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #else

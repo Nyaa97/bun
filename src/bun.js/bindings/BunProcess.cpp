@@ -57,7 +57,7 @@ typedef int mode_t;
 #include "ProcessBindingUV.h"
 #include "ProcessBindingNatives.h"
 
-#if OS(LINUX)
+#if OS(LINUX) && defined(__GLIBC__)
 #include <gnu/libc-version.h>
 #endif
 
@@ -1572,7 +1572,7 @@ static JSValue constructReportObjectComplete(VM& vm, Zig::GlobalObject* globalOb
             header->putDirect(vm, JSC::Identifier::fromString(vm, "host"_s), JSC::jsString(vm, String::fromUTF8ReplacingInvalidSequences(std::span { reinterpret_cast<const LChar*>(host), strlen(host) })), 0);
         }
 
-#if OS(LINUX)
+#if OS(LINUX) && defined(__GLIBC__)
         header->putDirect(vm, JSC::Identifier::fromString(vm, "glibcVersionCompiler"_s), JSC::jsString(vm, makeString(__GLIBC__, '.', __GLIBC_MINOR__)), 0);
         header->putDirect(vm, JSC::Identifier::fromString(vm, "glibcVersionRuntime"_s), JSC::jsString(vm, String::fromUTF8(gnu_get_libc_version()), 0));
 #endif

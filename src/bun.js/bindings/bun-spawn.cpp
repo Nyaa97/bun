@@ -2,14 +2,20 @@
 
 #if OS(LINUX)
 
+#if defined(__GLIBC__)
+#include <sys/fcntl.h>
+#include <sys/signal.h>
+#else
+#include <fcntl.h>
+#include <signal.h>
+#endif
+
 #include <fcntl.h>
 #include <cstring>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <sys/fcntl.h>
-#include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/resource.h>
 

@@ -991,7 +991,11 @@ else()
 endif()
 
 if(LINUX)
-  target_link_libraries(${bun} PRIVATE c pthread dl)
+  if(USE_MUSL)
+    target_link_libraries(${bun} PRIVATE c)
+  else()
+    target_link_libraries(${bun} PRIVATE c pthread dl)
+  endif()
 
   if(USE_STATIC_LIBATOMIC)
     target_link_libraries(${bun} PRIVATE libatomic.a)

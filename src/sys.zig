@@ -1575,7 +1575,10 @@ else
     system.writev;
 
 const pread_sym = if (builtin.os.tag == .linux and builtin.link_libc)
-    sys.pread64
+    if (builtin.abi.isGnu())
+        sys.pread64
+    else
+        sys.pread
 else if (builtin.os.tag.isDarwin())
     system.@"pread$NOCANCEL"
 else
@@ -1604,7 +1607,10 @@ pub fn pread(fd: bun.FileDescriptor, buf: []u8, offset: i64) Maybe(usize) {
 }
 
 const pwrite_sym = if (builtin.os.tag == .linux and builtin.link_libc)
-    sys.pwrite64
+    if (builtin.abi.isGnu())
+        sys.pwrite64
+    else
+        sys.pwrite
 else
     sys.pwrite;
 

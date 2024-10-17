@@ -841,13 +841,20 @@ pub fn printMetadata(writer: anytype) !void {
         const platform = bun.Analytics.GenerateHeader.GeneratePlatform.forOS();
         const cpu_features = CPUFeatures.get();
         if (bun.Environment.isLinux) {
-            // TODO: musl
-            const version = gnu_get_libc_version() orelse "";
             const kernel_version = bun.Analytics.GenerateHeader.GeneratePlatform.kernelVersion();
-            if (platform.os == .wsl) {
-                try writer.print("WSL Kernel v{d}.{d}.{d} | glibc v{s}\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch, bun.sliceTo(version, 0) });
-            } else {
-                try writer.print("Linux Kernel v{d}.{d}.{d} | glibc v{s}\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch, bun.sliceTo(version, 0) });
+            if (bun.Environment.isGlibc) {
+                const version = gnu_get_libc_version() orelse "";
+                if (platform.os == .wsl) {
+                    try writer.print("WSL Kernel v{d}.{d}.{d} | glibc v{s}\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch, bun.sliceTo(version, 0) });
+                } else {
+                    try writer.print("Linux Kernel v{d}.{d}.{d} | glibc v{s}\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch, bun.sliceTo(version, 0) });
+                }
+            } else if (bun.Environment.isMusl) {
+                if (platform.os == .wsl) {
+                    try writer.print("WSL Kernel v{d}.{d}.{d} | musl\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch });
+                } else {
+                    try writer.print("Linux Kernel v{d}.{d}.{d} | musl\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch });
+                }
             }
         } else if (bun.Environment.isMac) {
             try writer.print("macOS v{s}\n", .{platform.version});

@@ -124,10 +124,16 @@ pub fn getOSVersionMin(os: OperatingSystem) ?Target.Query.OsVersion {
     };
 }
 
-pub fn getOSGlibCVersion(os: OperatingSystem) ?Version {
+pub fn getOSGlibCVersion(os: OperatingSystem, abi: Target.Abi) ?Version {
     return switch (os) {
         // Compiling with a newer glibc than this will break certain cloud environments.
-        .linux => .{ .major = 2, .minor = 27, .patch = 0 },
+        .linux => _: {
+            if (abi.isGnu()) {
+                break :_ .{ .major = 2, .minor = 27, .patch = 0 };
+            } else {
+                break :_ null;
+            }
+        },
 
         else => null,
     };
@@ -165,11 +171,12 @@ pub fn build(b: *Build) !void {
     var target_query = b.standardTargetOptionsQueryOnly(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const os, const arch = brk: {
+    const os, const abi, const arch = brk: {
         // resolve the target query to pick up what operating system and cpu
         // architecture that is desired. this information is used to slightly
         // refine the query.
         const temp_resolved = b.resolveTargetQuery(target_query);
+        const abi = temp_resolved.result.abi;
         const arch = temp_resolved.result.cpu.arch;
         const os: OperatingSystem = if (arch.isWasm())
             .wasm
@@ -179,7 +186,7 @@ pub fn build(b: *Build) !void {
             .windows => .windows,
             else => |t| std.debug.panic("Unsupported OS tag {}", .{t}),
         };
-        break :brk .{ os, arch };
+        break :brk .{ os, abi, arch };
     };
 
     // target must be refined to support older but very popular devices on
@@ -191,7 +198,7 @@ pub fn build(b: *Build) !void {
     }
 
     target_query.os_version_min = getOSVersionMin(os);
-    target_query.glibc_version = getOSGlibCVersion(os);
+    target_query.glibc_version = getOSGlibCVersion(os, abi);
 
     const target = b.resolveTargetQuery(target_query);
 
@@ -308,11 +315,13 @@ pub fn build(b: *Build) !void {
     {
         const step = b.step("check-all", "Check for semantic analysis errors on all supported platforms");
         addMultiCheck(b, step, build_options, &.{
-            .{ .os = .windows, .arch = .x86_64 },
-            .{ .os = .mac, .arch = .x86_64 },
-            .{ .os = .mac, .arch = .aarch64 },
-            .{ .os = .linux, .arch = .x86_64 },
-            .{ .os = .linux, .arch = .aarch64 },
+            .{ .os = .windows, .abi = .none, .arch = .x86_64 },
+            .{ .os = .mac, .abi = .none, .arch = .x86_64 },
+            .{ .os = .mac, .abi = .none, .arch = .aarch64 },
+            .{ .os = .linux, .abi = .gnu, .arch = .x86_64 },
+            .{ .os = .linux, .abi = .gnu, .arch = .aarch64 },
+            .{ .os = .linux, .abi = .musl, .arch = .x86_64 },
+            .{ .os = .linux, .abi = .musl, .arch = .aarch64 },
         });
     }
 
@@ -320,7 +329,7 @@ pub fn build(b: *Build) !void {
     {
         const step = b.step("check-windows", "Check for semantic analysis errors on Windows");
         addMultiCheck(b, step, build_options, &.{
-            .{ .os = .windows, .arch = .x86_64 },
+            .{ .os = .windows, .abi = .none, .arch = .x86_64 },
         });
     }
 }
@@ -329,7 +338,7 @@ pub inline fn addMultiCheck(
     b: *Build,
     parent_step: *Step,
     root_build_options: BunBuildOptions,
-    to_check: []const struct { os: OperatingSystem, arch: Arch },
+    to_check: []const struct { os: OperatingSystem, abi: Target.Abi, arch: Arch },
 ) void {
     inline for (to_check) |check| {
         inline for (.{ .Debug, .ReleaseFast }) |mode| {
@@ -338,7 +347,7 @@ pub inline fn addMultiCheck(
                 .cpu_arch = check.arch,
                 .cpu_model = getCpuModel(check.os, check.arch) orelse .determined_by_cpu_arch,
                 .os_version_min = getOSVersionMin(check.os),
-                .glibc_version = getOSGlibCVersion(check.os),
+                .glibc_version = getOSGlibCVersion(check.os, check.abi),
             });
 
             var options: BunBuildOptions = .{

@@ -22,6 +22,8 @@ pub const isDebug = std.builtin.Mode.Debug == @import("builtin").mode;
 pub const isRelease = std.builtin.Mode.Debug != @import("builtin").mode and !isTest;
 pub const isTest = @import("builtin").is_test;
 pub const isLinux = @import("builtin").target.os.tag == .linux;
+pub const isGlibc = @import("builtin").target.abi.isGnu();
+pub const isMusl = @import("builtin").target.abi.isMusl();
 pub const isAarch64 = @import("builtin").target.cpu.arch.isAARCH64();
 pub const isX86 = @import("builtin").target.cpu.arch.isX86();
 pub const isX64 = @import("builtin").target.cpu.arch == .x86_64;
