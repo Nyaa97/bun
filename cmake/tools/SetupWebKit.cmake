@@ -17,7 +17,7 @@ if(NOT WEBKIT_PATH)
   set(WEBKIT_PATH ${DEFAULT_WEBKIT_PATH})
 endif()
 
-set(WEBKIT_INCLUDE_PATH ${WEBKIT_PATH})
+set(WEBKIT_INCLUDE_PATH ${WEBKIT_PATH}/include)
 set(WEBKIT_LIB_PATH ${WEBKIT_PATH}/lib)
 
 if(WEBKIT_LOCAL)
@@ -26,6 +26,7 @@ if(WEBKIT_LOCAL)
     # make jsc-compile-debug jsc-copy-headers
     include_directories(
       ${WEBKIT_PATH}
+      ${WEBKIT_PATH}/JavaScriptCore/Headers
       ${WEBKIT_PATH}/JavaScriptCore/Headers/JavaScriptCore
       ${WEBKIT_PATH}/JavaScriptCore/PrivateHeaders
       ${WEBKIT_PATH}/bmalloc/Headers
